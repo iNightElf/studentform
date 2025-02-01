@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Student Form</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f4f4f4;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .edit-btn {
+            background-color: #008CBA;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            margin-left: 5px;
+        }
+
+        .student-list {
+            margin-top: 20px;
+        }
+
+        .student-card {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .student-card img {
+            max-width: 80px;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .student-card p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .student-card button {
+            width: 48%;
+            font-size: 14px;
+        }
+
+        /* Responsive Styles */
+        @media (min-width: 600px) {
+            .container {
+                max-width: 600px;
+            }
+            .student-card {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .student-card img {
+                width: 100px;
+                margin-right: 15px;
+            }
+            .student-info {
+                flex-grow: 1;
+            }
+            .button-group {
+                display: flex;
+                gap: 5px;
+            }
+            .student-card button {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Student Information Form</h2>
+        <form id="studentForm">
+            <input type="file" id="photo" accept="image/*">
+            <input type="text" id="class" placeholder="Class" required>
+            <input type="text" id="name" placeholder="Name" required>
+            <input type="text" id="fatherName" placeholder="Father's Name" required>
+            <input type="text" id="motherName" placeholder="Mother's Name" required>
+            <input type="text" id="rollNo" placeholder="Roll No" required>
+            <input type="text" id="contactNumber" placeholder="Contact Number" required>
+            <button type="submit" id="submitBtn">Add Student</button>
+            <button type="button" id="updateBtn" style="display: none;">Update Student</button>
+        </form>
+        <div class="student-list" id="studentList"></div>
+    </div>
+
+    <script>
+        let editIndex = -1;
+
+        document.addEventListener('DOMContentLoaded', displayStudents);
+        document.getElementById('studentForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const photo = document.getElementById('photo').files[0];
+            const studentData = {
+                class: document.getElementById('class').value,
+                name: document.getElementById('name').value,
+                fatherName: document.getElementById('fatherName').value,
+                motherName: document.getElementById('motherName').value,
+                rollNo: document.getElementById('rollNo').value,
+                contactNumber: document.getElementById('contactNumber').value
+            };
+
+            if (photo) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    studentData.photo = event.target.result;
+                    saveStudent(studentData);
+                };
+                reader.readAsDataURL(photo);
+            } else {
+                studentData.photo = "default-photo.png";
+                saveStudent(studentData);
+            }
+        });
+
+        function saveStudent(student) {
+            let students = JSON.parse(localStorage.getItem('students')) || [];
+            students.push(student);
+            localStorage.setItem('students', JSON.stringify(students));
+            displayStudents();
+        }
+
+        function displayStudents() {
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = '';
+            let students = JSON.parse(localStorage.getItem('students')) || [];
+            students.forEach((student, index) => {
+                const studentDiv = document.createElement('div');
+                studentDiv.classList.add('student-card');
+                studentDiv.innerHTML = `
+                    <img src="${student.photo}" alt="Student Photo">
+                    <div class="student-info">
+                        <p><strong>Class:</strong> ${student.class}</p>
+                        <p><strong>Name:</strong> ${student.name}</p>
+                        <p><strong>Father's Name:</strong> ${student.fatherName}</p>
+                        <p><strong>Mother's Name:</strong> ${student.motherName}</p>
+                        <p><strong>Roll No:</strong> ${student.rollNo}</p>
+                        <p><strong>Contact:</strong> ${student.contactNumber}</p>
+                    </div>
+                    <div class="button-group">
+                        <button class="edit-btn" onclick="editStudent(${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteStudent(${index})">Delete</button>
+                    </div>
+                `;
+                studentList.appendChild(studentDiv);
+            });
+        }
+
+        function editStudent(index) {
+            let students = JSON.parse(localStorage.getItem('students')) || [];
+            const student = students[index];
+
+            document.getElementById('class').value = student.class;
+            document.getElementById('name').value = student.name;
+            document.getElementById('fatherName').value = student.fatherName;
+            document.getElementById('motherName').value = student.motherName;
+            document.getElementById('rollNo').value = student.rollNo;
+            document.getElementById('contactNumber').value = student.contactNumber;
+
+            editIndex = index;
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('updateBtn').style.display = 'block';
+        }
+
+        function deleteStudent(index) {
+            let students = JSON.parse(localStorage.getItem('students')) || [];
+            students.splice(index, 1);
+            localStorage.setItem('students', JSON.stringify(students));
+            displayStudents();
+        }
+    </script>
+</body>
+</html>
