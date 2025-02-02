@@ -215,14 +215,26 @@
             doc.addImage(student.photo, "JPEG", 15, yPosition + 5, 25, 25);
         }
 
-        // Student Info
+        // Student Info with Bold Labels
         doc.setFontSize(10);
-        doc.text(`Class: ${student.class}`, 50, yPosition + 10);
-        doc.text(`Name: ${student.name}`, 50, yPosition + 20);
-        doc.text(`Father's name: ${student.fatherName}`, 50, yPosition + 30);
-        doc.text(`Mother's name: ${student.motherName}`, 50, yPosition + 40);
-        doc.text(`Roll No: ${student.rollNo}`, 50, yPosition + 50);
-        doc.text(`Contact no: ${student.contactNumber}`, 50, yPosition + 60);
+        doc.setFont('arial', 'bold'); // Set font to bold
+        doc.setTextColor(152,0,0);
+        doc.text(`Class:`, 50, yPosition + 10);
+        doc.text(`Name:`, 50, yPosition + 20);
+        doc.text(`Father's name:`, 50, yPosition + 30);
+        doc.text(`Mother's name:`, 50, yPosition + 40);
+        doc.text(`Roll No:`, 50, yPosition + 50);
+        doc.text(`Contact no:`, 50, yPosition + 60);
+
+        // Reset font to normal for values
+        doc.setFont('arial', 'normal');
+        doc.setTextColor(0,0,0);
+        doc.text(`${student.class}`, 80, yPosition + 10);
+        doc.text(`${student.name}`, 80, yPosition + 20);
+        doc.text(`${student.fatherName}`, 80, yPosition + 30);
+        doc.text(`${student.motherName}`, 80, yPosition + 40);
+        doc.text(`${student.rollNo}`, 80, yPosition + 50);
+        doc.text(`${student.contactNumber}`, 80, yPosition + 60);
 
         // Add a dashed separation line
         doc.setDrawColor(0); // Set line color to black
