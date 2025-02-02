@@ -3,125 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Student Form</title>
+    <title>Student Information Form</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-        
+        /* Your existing CSS styles */
         body {
-            background-color: #f4f4f4;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .form-container {
+            max-width: 600px;
+            margin: auto;
         }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        input, button {
+        .form-container input, .form-container button {
             width: 100%;
             padding: 10px;
-            margin: 8px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
+            margin: 5px 0;
+            box-sizing: border-box;
         }
-
-        button {
-            cursor: pointer;
+        .form-container button {
             background-color: #4CAF50;
             color: white;
             border: none;
+            cursor: pointer;
         }
-
-        button:hover {
+        .form-container button:hover {
             background-color: #45a049;
         }
-
-        .edit-btn {
-            background-color: #008CBA;
-        }
-
-        .delete-btn {
-            background-color: #f44336;
-            margin-left: 5px;
-        }
-
         .student-list {
             margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
         }
-
         .student-card {
-            background: white;
+            border: 1px solid #ccc;
             padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 280px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
         }
-
         .student-card img {
-            max-width: 80px;
-            height: auto;
-            display: block;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
             margin-bottom: 10px;
-            border-radius: 5px;
         }
-
-        .student-card p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .student-card button {
+        .edit-btn, .delete-btn {
             width: 48%;
-            font-size: 14px;
+            padding: 8px;
+            margin: 5px 1%;
+            border: none;
+            cursor: pointer;
+            color: white;
         }
-
-        /* Responsive Styles */
-        @media (min-width: 600px) {
-            .container {
-                max-width: 600px;
-            }
-            .student-card {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-            .student-card img {
-                width: 100px;
-                margin-right: 15px;
-            }
-            .student-info {
-                flex-grow: 1;
-            }
-            .button-group {
-                display: flex;
-                gap: 5px;
-            }
-            .student-card button {
-                width: auto;
-            }
+        .edit-btn { background-color: #008CBA; }
+        .delete-btn { background-color: #f44336; }
+        .pdf-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            width: 200px;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="form-container">
         <h2>Student Information Form</h2>
         <form id="studentForm">
             <input type="file" id="photo" accept="image/*">
@@ -132,18 +86,31 @@
             <input type="text" id="rollNo" placeholder="Roll No" required>
             <input type="text" id="contactNumber" placeholder="Contact Number" required>
             <button type="submit" id="submitBtn">Add Student</button>
-            <button type="button" id="updateBtn" style="display: none;">Update Student</button>
+            <button type="button" id="updateBtn" style="display: none;" onclick="updateStudent()">Update Student</button>
         </form>
         <div class="student-list" id="studentList"></div>
+        <button class="pdf-btn" onclick="downloadPDF()">Download Data as PDF</button>
+        <button class="pdf-btn" onclick="saveToFile()">Save Data to File</button>
+        <button class="pdf-btn" onclick="loadFromFile()">Load Data from File</button>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.14/jspdf.plugin.autotable.min.js"></script>
     <script>
+        const { jsPDF } = window.jspdf;
+        let students = [];
         let editIndex = -1;
 
-        document.addEventListener('DOMContentLoaded', displayStudents);
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM fully loaded!");
+        });
+
         document.getElementById('studentForm').addEventListener('submit', function (e) {
             e.preventDefault();
+            saveOrUpdateStudent();
+        });
 
+        function saveOrUpdateStudent() {
             const photo = document.getElementById('photo').files[0];
             const studentData = {
                 class: document.getElementById('class').value,
@@ -151,7 +118,8 @@
                 fatherName: document.getElementById('fatherName').value,
                 motherName: document.getElementById('motherName').value,
                 rollNo: document.getElementById('rollNo').value,
-                contactNumber: document.getElementById('contactNumber').value
+                contactNumber: document.getElementById('contactNumber').value,
+                photo: ""
             };
 
             if (photo) {
@@ -162,46 +130,43 @@
                 };
                 reader.readAsDataURL(photo);
             } else {
-                studentData.photo = "default-photo.png";
                 saveStudent(studentData);
             }
-        });
+        }
 
         function saveStudent(student) {
-            let students = JSON.parse(localStorage.getItem('students')) || [];
-            students.push(student);
-            localStorage.setItem('students', JSON.stringify(students));
+            if (editIndex >= 0) {
+                students[editIndex] = student;
+                editIndex = -1;
+            } else {
+                students.push(student);
+            }
+            resetForm();
             displayStudents();
         }
 
         function displayStudents() {
             const studentList = document.getElementById('studentList');
             studentList.innerHTML = '';
-            let students = JSON.parse(localStorage.getItem('students')) || [];
             students.forEach((student, index) => {
                 const studentDiv = document.createElement('div');
-                studentDiv.classList.add('student-card');
+                studentDiv.className = "student-card";
                 studentDiv.innerHTML = `
-                    <img src="${student.photo}" alt="Student Photo">
-                    <div class="student-info">
-                        <p><strong>Class:</strong> ${student.class}</p>
-                        <p><strong>Name:</strong> ${student.name}</p>
-                        <p><strong>Father's Name:</strong> ${student.fatherName}</p>
-                        <p><strong>Mother's Name:</strong> ${student.motherName}</p>
-                        <p><strong>Roll No:</strong> ${student.rollNo}</p>
-                        <p><strong>Contact:</strong> ${student.contactNumber}</p>
-                    </div>
-                    <div class="button-group">
-                        <button class="edit-btn" onclick="editStudent(${index})">Edit</button>
-                        <button class="delete-btn" onclick="deleteStudent(${index})">Delete</button>
-                    </div>
+                    <img src="${student.photo || 'default-photo.png'}" alt="Student Photo">
+                    <p><strong>Class:</strong> ${student.class}</p>
+                    <p><strong>Name:</strong> ${student.name}</p>
+                    <p><strong>Father's Name:</strong> ${student.fatherName}</p>
+                    <p><strong>Mother's Name:</strong> ${student.motherName}</p>
+                    <p><strong>Roll No:</strong> ${student.rollNo}</p>
+                    <p><strong>Contact:</strong> ${student.contactNumber}</p>
+                    <button class="edit-btn" onclick="editStudent(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteStudent(${index})">Delete</button>
                 `;
                 studentList.appendChild(studentDiv);
             });
         }
 
         function editStudent(index) {
-            let students = JSON.parse(localStorage.getItem('students')) || [];
             const student = students[index];
 
             document.getElementById('class').value = student.class;
@@ -212,15 +177,104 @@
             document.getElementById('contactNumber').value = student.contactNumber;
 
             editIndex = index;
+
             document.getElementById('submitBtn').style.display = 'none';
             document.getElementById('updateBtn').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateStudent() {
+            saveOrUpdateStudent();
         }
 
         function deleteStudent(index) {
-            let students = JSON.parse(localStorage.getItem('students')) || [];
             students.splice(index, 1);
-            localStorage.setItem('students', JSON.stringify(students));
             displayStudents();
+        }
+
+        function resetForm() {
+            document.getElementById('studentForm').reset();
+            document.getElementById('submitBtn').style.display = 'block';
+            document.getElementById('updateBtn').style.display = 'none';
+        }
+
+        function downloadPDF() {
+    const doc = new jsPDF();
+    doc.text("Student List", 85, 10);
+
+    let yPosition = 20; // Start position for the first student
+
+    students.forEach((student, index) => {
+        // Add Serial Number
+        doc.setFontSize(12);
+        doc.text(`Student ${index + 1}`, 15, yPosition);
+
+        // Add Image if available
+        if (student.photo) {
+            doc.addImage(student.photo, "JPEG", 15, yPosition + 5, 25, 25);
+        }
+
+        // Student Info
+        doc.setFontSize(10);
+        doc.text(`Class: ${student.class}`, 50, yPosition + 10);
+        doc.text(`Name: ${student.name}`, 50, yPosition + 20);
+        doc.text(`Father's name: ${student.fatherName}`, 50, yPosition + 30);
+        doc.text(`Mother's name: ${student.motherName}`, 50, yPosition + 40);
+        doc.text(`Roll No: ${student.rollNo}`, 50, yPosition + 50);
+        doc.text(`Contact no: ${student.contactNumber}`, 50, yPosition + 60);
+
+        // Add a dashed separation line
+        doc.setDrawColor(0); // Set line color to black
+        doc.setLineWidth(0.1); // Set line thickness
+        doc.setLineDash([5, 5], 0); // Set dashed line pattern (5 on, 5 off)
+        doc.line(15, yPosition + 70, 195, yPosition + 70); // Draw the line
+
+        yPosition += 80; // Move down for the next entry
+
+        // If near the bottom, create a new page
+        if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 20; // Reset yPosition for the new page
+        }
+    });
+
+    doc.save("Student_List.pdf");
+}
+
+        // Save student data to a file
+        async function saveToFile() {
+            const data = JSON.stringify(students, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'students.json';
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+
+        // Load student data from a file
+        async function loadFromFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+
+            input.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        students = JSON.parse(e.target.result);
+                        displayStudents();
+                    };
+                    reader.readAsText(file);
+                }
+            };
+
+            input.click();
         }
     </script>
 </body>
